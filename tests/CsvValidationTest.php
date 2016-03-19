@@ -50,4 +50,28 @@ class CsvValidationTest extends \PHPUnit_Framework_TestCase {
     $file = new CsvFile(__DIR__ . '/fixtures/invalid_row.csv', 2);
     $file->readAndValidate();
   }
+
+  /**
+   * If a row with votes appears after a row with none it's invalid.
+   *
+   * @covers ::readAndValidate
+   * @expectedException \IrvBallotCounter\CsvFileException
+   * @expectedExceptionMessage not a valid ballot number
+   */
+  public function testInvalidBallotNum() {
+    $file = new CsvFile(__DIR__ . '/fixtures/invalid_ballot_num.csv', 2);
+    $file->readAndValidate();
+  }
+
+  /**
+   * If a row with votes appears after a row with none it's invalid.
+   *
+   * @covers ::readAndValidate
+   * @expectedException \IrvBallotCounter\CsvFileException
+   * @expectedExceptionMessage Row is not empty, but came after an empty row
+   */
+  public function testExtraRow() {
+    $file = new CsvFile(__DIR__ . '/fixtures/extra_row.csv', 2);
+    $file->readAndValidate();
+  }
 }
