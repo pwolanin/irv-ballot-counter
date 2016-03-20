@@ -221,7 +221,9 @@ class CsvFile {
   protected function normalizeVoteFormat(array $ballot_rows) {
     $normalized_rows = [];
     foreach ($ballot_rows as $row) {
-      $normalized_rows[] = array_map(function($v) { return strlen($v) != 0; }, $row);
+      $ballot_num = array_slice($row, 0, 1);
+      $votes = array_map(function($v) { return strlen($v) != 0; }, array_slice($row, 1));
+      $normalized_rows[] = array_merge($ballot_num, $votes);
     }
     return $normalized_rows;
   }

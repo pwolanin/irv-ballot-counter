@@ -41,6 +41,20 @@ class CsvProcessTest extends \PHPUnit_Framework_TestCase {
   }
 
   /**
+   * @covers ::getBallotRows
+   */
+  public function testGetBallotRows() {
+    $file = new CsvFile(__DIR__ . '/fixtures/simple_x_3candidate.csv', 3);
+    $rows = $file->getBallotRows();
+    $this->assertEquals($file->getBallotCount(), count($rows));
+    // The ballot number in this file should be the index plus 1.
+    foreach ($rows as $idx => $ballot) {
+      $ballot_num = reset($ballot);
+      $this->assertEquals($idx + 1, $ballot_num);
+    }
+  }
+
+  /**
    * @covers ::differingRows
    */
   public function testDifferingRows() {

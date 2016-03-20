@@ -80,6 +80,10 @@ class Manager {
     }
   }
 
+  /**
+   * @return array
+   * @throws \Exception
+   */
   public function getFirstRoundResults() {
     if ($this->getDifferences()) {
       throw new \Exception('The csv ballot files do not match.');
@@ -119,9 +123,9 @@ class Manager {
   public function runoffNeeded() {
     $needed = true;
     $results = $this->getFirstRoundResults();
-    $divisor = (float) $results['ballot-count'];
+    $divisor = 0.01 * (float) $results['ballot_count'];
     foreach ($results['votes'] as $name => $count) {
-      if (((float) $count) / $divisor >= self::ENDORSEMENT_THRESHOLD) {
+      if (($count / $divisor) >= self::ENDORSEMENT_THRESHOLD) {
         $needed = false;
       }
     }
