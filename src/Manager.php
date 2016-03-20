@@ -57,9 +57,12 @@ class Manager {
     return $this->differences;
   }
 
+  /**
+   * @throws \IrvBallotCounter\ManagerException
+   */
   public function validateFirstRoundVotes() {
     if ($this->getDifferences()) {
-      throw new \Exception('The csv ballot files do not match.');
+      throw new ManagerException('The csv ballot files do not match.');
     }
     if (isset($this->round1Results)) {
       return;
@@ -76,17 +79,18 @@ class Manager {
       }
     }
     if ($invalid) {
-      throw new \Exception(sprintf('Invalid votes for ballot numbers %s', implode(', ', $invalid)));
+      throw new ManagerException(sprintf('Invalid first round votes for ballot numbers %s', implode(', ', $invalid)));
     }
   }
 
   /**
    * @return array
    * @throws \Exception
+   * @throws \IrvBallotCounter\ManagerException
    */
   public function getFirstRoundResults() {
     if ($this->getDifferences()) {
-      throw new \Exception('The csv ballot files do not match.');
+      throw new ManagerException('The csv ballot files do not match.');
     }
     if (!isset($this->round1Results)) {
       $this->validateFirstRoundVotes();
@@ -145,9 +149,12 @@ class Manager {
     return $needed;
   }
 
+  /**
+   * @throws \IrvBallotCounter\ManagerException
+   */
   public function validateSecondRoundVotes() {
     if ($this->getDifferences()) {
-      throw new \Exception('The csv ballot files do not match.');
+      throw new ManagerException('The csv ballot files do not match.');
     }
     if (isset($this->round2Results)) {
       return;
@@ -158,19 +165,30 @@ class Manager {
     $file = reset($this->files);
     foreach ($file->getBallotRows() as $ballot) {
       // A ballot without votes for any candidate is added to no endorsement.
-      $votes = array_slice($ballot, 1 + $this->numCandidates, $this->numCandidates);
+      // The offset has 2 added since we need to skip the ballot number column
+      // and also the "no endorsement" column from the 1st round. For example
+      // a header row with 4 candidates could llok like:
+      // [0 => 'num', 1 => 'A', 2 => 'B', 3 => 'C', 4 => 'D', 5 => 'none', 6 => 'A', 7 => 'B', 8 => 'C', 9 => 'D', 10 => 'none']
+      $votes = array_slice($ballot, 2 + $this->numCandidates, $this->numCandidates);
       if (count(array_filter($votes)) > 1) {
         $invalid[] = reset($ballot);
       }
     }
     if ($invalid) {
-      throw new \Exception(sprintf('Invalid votes for ballot numbers %s', implode(', ', $invalid)));
+      throw new ManagerException(sprintf('Invalid second round votes for ballot numbers %s', implode(', ', $invalid)));
     }
   }
 
+  /**
+   * Find eliminated candidates, transfer votes, and calculate results.
+   *
+   * @return array
+   *   The results, or an empty array if a runoff is not needed.
+   * @throws \IrvBallotCounter\ManagerException
+   */
   public function getSecondRoundResults() {
     if ($this->getDifferences()) {
-      throw new \Exception('The csv ballot files do not match.');
+      throw new ManagerException('The csv ballot files do not match.');
     }
     if (!$this->runoffNeeded()) {
       $this->round2Results = [];
@@ -191,7 +209,7 @@ class Manager {
       foreach ($file->getBallotRows() as $row) {
         $transfer_vote = false;
         $round1_vote = array_slice($row, 1, $this->numCandidates);
-        $round2_vote = array_slice($row, $this->numCandidates + 2, $this->numCandidates);
+        $round2_vote = array_slice($row, 2 + $this->numCandidates, $this->numCandidates);
         foreach ($eliminated as $idx) {
           $transfer_vote = $transfer_vote || $round1_vote[$idx];
           // Remove votes for eliminated candidates.

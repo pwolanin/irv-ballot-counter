@@ -127,4 +127,30 @@ class ManagerTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals(0, $results['votes']['Smoyer']);
     $this->assertEquals(4, $results['votes']['no endorsement']);
   }
+
+  /**
+   * @covers ::validateFirstRoundVotes
+   * @expectedException \IrvBallotCounter\ManagerException
+   * @expectedExceptionMessage Invalid first round votes for ballot numbers 1
+   */
+  public function testValidateFirstRoundVotes() {
+    $filenames = [
+      __DIR__ . '/fixtures/3candidates_invalid_vote_rows.csv',
+    ];
+    $manager = new Manager($filenames, 2, 1);
+    $manager->validateFirstRoundVotes();
+  }
+
+  /**
+   * @covers ::validateSecondRoundVotes
+   * @expectedException \IrvBallotCounter\ManagerException
+   * @expectedExceptionMessage Invalid second round votes for ballot numbers 3
+   */
+  public function testValidateSecondRoundVotes() {
+    $filenames = [
+      __DIR__ . '/fixtures/3candidates_invalid_vote_rows.csv',
+    ];
+    $manager = new Manager($filenames, 2, 1);
+    $manager->validateSecondRoundVotes();
+  }
 }
