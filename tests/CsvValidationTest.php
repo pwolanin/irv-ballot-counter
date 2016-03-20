@@ -74,4 +74,25 @@ class CsvValidationTest extends \PHPUnit_Framework_TestCase {
     $file = new CsvFile(__DIR__ . '/fixtures/extra_row.csv', 2);
     $file->readAndValidate();
   }
+
+  /**
+   * @covers ::readAndValidate
+   * @expectedException \IrvBallotCounter\CsvFileException
+   * @expectedExceptionMessage Invalid length row
+   */
+  public function testWrongNumCandidates() {
+    // This error occurs because 2 candidates expect, but 3 are present.
+    $file = new CsvFile(__DIR__ . '/fixtures/simple_x_3candidate.csv', 2);
+    $file->readAndValidate();
+  }
+
+  /**
+   * @covers ::readAndValidate
+   * @expectedException \IrvBallotCounter\CsvFileException
+   * @expectedExceptionMessage candidates in the first half of the header row don't match the second half
+   */
+  public function testInvalidHeaderHalves() {
+    $file = new CsvFile(__DIR__ . '/fixtures/invalidheader_x_3candidate.csv', 3);
+    $file->readAndValidate();
+  }
 }

@@ -46,6 +46,15 @@ class CsvFile {
   }
 
   /**
+   * Get the filename.
+   *
+   * @return string
+   */
+  public function getFilename() {
+    return $this->filename;
+  }
+
+  /**
    * Get the CSV header row.
    *
    * @return array
@@ -81,6 +90,38 @@ class CsvFile {
   }
 
   /**
+   * @param \IrvBallotCounter\CsvFile $other
+   * @return bool
+   */
+  public function equals(CsvFile $other) {
+    $equal = $this->getHeader() === $other->getHeader();
+    // We could make this faster, but we are using small data sets.
+    return $equal && !$this->differingRows($other);
+  }
+
+  /**
+   * @param \IrvBallotCounter\CsvFile $other
+   * @return array
+   */
+  public function differingRows(CsvFile $other) {
+    $differing = [];
+    $my_rows = $this->getBallotRows();
+    $other_rows = $other->getBallotRows();
+    $equal = count($my_rows) == count($other_rows);
+    if ($equal) {
+      $count = count($my_rows);
+      for ($i = 0; $i < $count; $i++) {
+        $a = array_pop($my_rows);
+        $b = array_pop($other_rows);
+        if ($a !== $b) {
+          $differing[] = $a;
+        }
+      }
+    }
+    return $differing;
+  }
+
+   /**
    * Read file and validate data
    *
    * @throws \IrvBallotCounter\CsvFileException
@@ -99,12 +140,19 @@ class CsvFile {
     }
     $this->header = $csv[0];
     $this->validateRowLength($this->header);
+    // The two halves of the header should be the same.
+    $round1 = array_slice($this->header, 1, $this->numCandidates + 1);
+    $round2 = array_slice($this->header, $this->numCandidates + 2);
+    if ($round1 !== $round2) {
+      throw new CsvFileException("{$this->filename} candidates in the first half of the header row don't match the second half: " . print_r($this->header, true));
+    }
     unset($csv[0]);
     $count = $this->findBallotCount($csv);
-    $this->ballotRows = array_slice($csv, 0, $count, true);
-    foreach ($this->ballotRows as $row) {
+    $ballot_rows = array_slice($csv, 0, $count, true);
+    foreach ($ballot_rows as $row) {
       $this->validateRowLength($row);
     }
+    $this->ballotRows = $this->normalizeVoteFormat($ballot_rows);
     $empty_rows = array_slice($csv, $count, NULL, true);
     $this->validateEmptyRows($empty_rows);
   }
@@ -162,6 +210,20 @@ class CsvFile {
         throw new CsvFileException("Row is not empty, but came after an empty row: " . print_r($row, true));
       }
     }
+  }
+
+  /**
+   * Normalize string votes to boolean values.
+   *
+   * @param array $ballot_rows
+   * @return array
+   */
+  protected function normalizeVoteFormat(array $ballot_rows) {
+    $normalized_rows = [];
+    foreach ($ballot_rows as $row) {
+      $normalized_rows[] = array_map(function($v) { return strlen($v) != 0; }, $row);
+    }
+    return $normalized_rows;
   }
 
 }

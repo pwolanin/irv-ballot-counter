@@ -1,0 +1,13 @@
+ballot_num,candidate_A,candidate_B,candidate_C,none,candidate_A,candidate_B,candidate_C,none
+1,1,,,,,1,,
+2,,2,,,,,,
+3,,,3,,1,,,
+4,,,,1,,,,
+5,,2,,,,,3,
+6,1,,,,,,,
+7,,2,,,,,3,
+8,1,,,,,1,,
+9,1,,,,,,3,
+10,,,2,,2,,,
+11,,,,,,,,
+12,,,,,,,,
