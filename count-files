@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+if ($argc < 4) {
+  echo "You must supply a list of csv file names as arguments\n";
+  exit(1);
+}
+
+$filenames = $argv;
+array_shift($filenames);
+$num_candidates = array_shift($filenames);
+$num_seats = array_shift($filenames);
+
+$manager = new \IrvBallotCounter\Manager($filenames, $num_candidates, $num_seats);
+
+print_r($manager->getFirstRoundResults());
+
