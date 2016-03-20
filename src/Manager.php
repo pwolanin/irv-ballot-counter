@@ -216,6 +216,9 @@ class Manager {
           $round1_vote[$idx] = false;
           $round2_vote[$idx] = false;
         }
+        // Special case - if there was no endorsement in the 1st round, but a
+        // name specified for the runoff.
+        $transfer_vote = $transfer_vote || !array_filter($round1_vote);
         if ($transfer_vote) {
           foreach ($round2_vote as $idx => $vote) {
             if ($vote) {

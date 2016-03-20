@@ -18,7 +18,7 @@ class CsvProcessTest extends \PHPUnit_Framework_TestCase {
     $file = new CsvFile(__DIR__ . '/fixtures/simple_x_3candidate.csv', 3);
     $file->readAndValidate();
     $this->assertEquals(['ballot_num','candidate_A','candidate_B','candidate_C','none','candidate_A','candidate_B','candidate_C','none'], $file->getHeader());
-    $this->assertEquals(10, $file->getBallotCount());
+    $this->assertEquals(11, $file->getBallotCount());
   }
 
   /**
@@ -68,5 +68,14 @@ class CsvProcessTest extends \PHPUnit_Framework_TestCase {
     $row = end($diff);
     $ballot_nam = reset($row);
     $this->assertEquals(8, $ballot_nam);
+    // A file with one row that differs and one extra row
+    $different_file = new CsvFile(__DIR__ . '/fixtures/third_x_3candidate.csv', 3);
+    $diff = $file1->differingRows($different_file);
+    $this->assertEquals(2, count($diff));
+    foreach([12, 8] as $expected_ballot_num) {
+      $row = array_pop($diff);
+      $ballot_nam = reset($row);
+      $this->assertEquals($expected_ballot_num, $ballot_nam);
+    }
   }
 }

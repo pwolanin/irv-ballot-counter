@@ -105,19 +105,20 @@ class CsvFile {
    */
   public function differingRows(CsvFile $other) {
     $differing = [];
-    $my_rows = $this->getBallotRows();
-    $other_rows = $other->getBallotRows();
-    $equal = count($my_rows) == count($other_rows);
-    if ($equal) {
-      $count = count($my_rows);
-      for ($i = 0; $i < $count; $i++) {
-        $a = array_pop($my_rows);
-        $b = array_pop($other_rows);
-        if ($a !== $b) {
-          $differing[] = $a;
-        }
+    $my_rows = array_reverse($this->getBallotRows());
+    $other_rows = array_reverse($other->getBallotRows());
+
+    $count = min(count($my_rows), count($other_rows));
+    for ($i = 0; $i < $count; $i++) {
+      $a = array_pop($my_rows);
+      $b = array_pop($other_rows);
+      if ($a !== $b) {
+        $differing[] = $a;
       }
     }
+    // Merge any excess rows - the differ by definition.
+    $differing = array_merge($differing, $my_rows, $other_rows);
+
     return $differing;
   }
 
