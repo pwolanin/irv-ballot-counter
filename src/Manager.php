@@ -166,6 +166,7 @@ class Manager {
       $this->validateSecondRoundVotes();
       $this->round2Results = [];
       $eliminated = $this->getEliminatedCandidates();
+      $this->round2Results['eliminated'] = $eliminated;
     }
     return $this->round2Results;
   }

@@ -31,9 +31,9 @@ class ManagerTest extends \PHPUnit_Framework_TestCase {
   }
 
   /**
- * @covers ::getFirstRoundResults
- * @covers ::runoffNeeded
- */
+   * @covers ::getFirstRoundResults
+   * @covers ::runoffNeeded
+   */
   public function testSimpleFirstRound() {
     $filenames = [
       __DIR__ . '/fixtures/simple_x_3candidate.csv',
@@ -47,6 +47,21 @@ class ManagerTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals(2, $results['votes']['candidate_C']);
     $this->assertEquals(1, $results['votes']['no endorsement']);
     $this->assertEquals(true, $manager->runoffNeeded());
+  }
+
+  /**
+   * @covers ::getSecondRoundResults
+   */
+  public function testSimpleFSecondRound() {
+    $filenames = [
+      __DIR__ . '/fixtures/simple_x_3candidate.csv',
+      __DIR__ . '/fixtures/simple_123_3candidate.csv',
+    ];
+    $manager = new Manager($filenames, 3, 1);
+    $this->assertEquals(true, $manager->runoffNeeded());
+    $result = $manager->getSecondRoundResults();
+    $this->assertEquals(1, count($result['eliminated']));
+    $this->assertEquals('candidate_C', end($result['eliminated']));
   }
 
   /**
