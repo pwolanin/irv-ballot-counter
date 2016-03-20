@@ -121,7 +121,7 @@ class Manager {
   }
 
   public function runoffNeeded() {
-    $needed = true;
+    $needed = $this->numCandidates > ($this->numSeats + 1);
     $results = $this->getFirstRoundResults();
     $divisor = 0.01 * (float) $results['ballot_count'];
     foreach ($results['votes'] as $name => $count) {
@@ -132,10 +132,62 @@ class Manager {
     return $needed;
   }
 
+  public function validateSecondRoundVotes() {
+    if ($this->getDifferences()) {
+      throw new \Exception('The csv ballot files do not match.');
+    }
+    if (isset($this->round2Results)) {
+      return;
+    }
+    $invalid = [];
+    // We've already validated that all the files have the same data.
+    /** @var CsvFile $file */
+    $file = reset($this->files);
+    foreach ($file->getBallotRows() as $ballot) {
+      // A ballot without votes for any candidate is added to no endorsement.
+      $votes = array_slice($ballot, 1 + $this->numCandidates, $this->numCandidates);
+      if (count(array_filter($votes)) > 1) {
+        $invalid[] = reset($ballot);
+      }
+    }
+    if ($invalid) {
+      throw new \Exception(sprintf('Invalid votes for ballot numbers %s', implode(', ', $invalid)));
+    }
+  }
+
   public function getSecondRoundResults() {
     if ($this->getDifferences()) {
       throw new \Exception('The csv ballot files do not match.');
     }
+    if (!$this->runoffNeeded()) {
+      $this->round2Results = [];
+    }
+    if (!isset($this->round2Results)) {
+      $this->validateSecondRoundVotes();
+      $this->round2Results = [];
+      $eliminated = $this->getEliminatedCandidates();
+    }
     return $this->round2Results;
+  }
+
+  protected function getEliminatedCandidates() {
+    $eliminated = [];
+    $results = $this->getFirstRoundResults();
+    $candidates = $results['votes'];
+    unset($candidates['no endorsement']);
+    // Eliminate down to the
+    while (count($candidates) > ($this->numSeats + 1)) {
+      $min = min($candidates);
+      foreach ($candidates as $name => $vote_count) {
+        if ($vote_count == $min) {
+          $eliminated[$name] = $name;
+        }
+      }
+      foreach($eliminated as $name) {
+        unset($candidates[$name]);
+      }
+    }
+
+    return $eliminated;
   }
 }
