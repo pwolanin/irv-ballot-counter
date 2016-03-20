@@ -39,7 +39,7 @@ class ManagerTest extends \PHPUnit_Framework_TestCase {
       __DIR__ . '/fixtures/simple_x_3candidate.csv',
       __DIR__ . '/fixtures/simple_123_3candidate.csv',
     ];
-    $manager = new Manager($filenames, 3, 2);
+    $manager = new Manager($filenames, 3, 1);
     $results = $manager->getFirstRoundResults();
     $this->assertEquals(10, $results['ballot_count']);
     $this->assertEquals(4, $results['votes']['candidate_A']);
@@ -58,12 +58,12 @@ class ManagerTest extends \PHPUnit_Framework_TestCase {
       __DIR__ . '/fixtures/endorsed_x_3candidate.csv',
       __DIR__ . '/fixtures/endorsed_1_3candidate.csv',
     ];
-    $manager = new Manager($filenames, 3, 2);
+    $manager = new Manager($filenames, 3, 1);
     $results = $manager->getFirstRoundResults();
     $this->assertEquals(15, $results['ballot_count']);
     $this->assertEquals(9, $results['votes']['candidate_A']);
-    $this->assertEquals(6, $results['votes']['candidate_B']);
-    $this->assertEquals(4, $results['votes']['candidate_C']);
+    $this->assertEquals(3, $results['votes']['candidate_B']);
+    $this->assertEquals(2, $results['votes']['candidate_C']);
     $this->assertEquals(1, $results['votes']['no endorsement']);
     $this->assertEquals(false, $manager->runoffNeeded());
   }

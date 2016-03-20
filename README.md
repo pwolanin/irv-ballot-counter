@@ -14,5 +14,5 @@ The rules of the endorsement vote are:
 * The instant runoff eliminates the lowest voter getters until there are N + 1 candidates left.
 
 This code currently handles just a single replacement vote in the 2nd round.
-This is valid whn there is only one position to be elected, or when the number
-of candidates is N+2 and a tie is seen as unlikely.
+This is valid when there is only one position to be elected, or when the number
+of candidates is N + 2 and a tie is seen as unlikely.
