@@ -15,6 +15,13 @@ $num_seats = array_shift($filenames);
 
 $manager = new \IrvBallotCounter\Manager($filenames, $num_candidates, $num_seats);
 
+$messages = $manager->getDifferences();
+
+if ($messages) {
+  echo implode("\n", $messages) . "\n\n";
+  exit(1);
+}
+
 print_r($manager->getFirstRoundResults());
 
 if ($manager->runoffNeeded()) {
