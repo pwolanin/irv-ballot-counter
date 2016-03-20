@@ -90,34 +90,47 @@ class Manager {
     }
     if (!isset($this->round1Results)) {
       $this->validateFirstRoundVotes();
-      $this->round1Results = [];
       // We've already validated that all the files have the same data.
       /** @var CsvFile $file */
       $file = reset($this->files);
       $candidates = array_slice($file->getHeader(), 1, $this->numCandidates);
-      $this->round1Results['ballot_count'] = $file->getBallotCount();
-      $this->round1Results['votes'] = [];
-      foreach ($candidates as $name) {
-        $this->round1Results['votes'][$name] = 0;
-      }
-      $this->round1Results['votes']['no endorsement'] = 0;
-      foreach ($file->getBallotRows() as $ballot) {
-        // A ballot without votes for any candidate is added to no endorsement.
-        $votes = array_slice($ballot, 1, $this->numCandidates);
-        $no_endorsement = true;
-        foreach ($votes as $idx => $v) {
-          if ($v) {
-            $no_endorsement = false;
-            $name = $candidates[$idx];
-            $this->round1Results['votes'][$name]++;
-          }
-        }
-        if ($no_endorsement) {
-          $this->round1Results['votes']['no endorsement']++;
-        }
-      }
+      $this->round1Results = $this->countBallots($candidates, $file->getBallotRows());
     }
     return $this->round1Results;
+  }
+
+  /**
+   * @param array $candidates
+   * @param array $ballot_rows
+   * @param int $offset
+   *   The offset for votes in the balloe row.
+   * @return array
+   */
+  public function countBallots(array $candidates, array $ballot_rows, $offset = 1) {
+    $results = [];
+    $results['ballot_count'] = count($ballot_rows);
+    $results['votes'] = [];
+    foreach ($candidates as $name) {
+      $results['votes'][$name] = 0;
+    }
+    $results['votes']['no endorsement'] = 0;
+    $num_candidates = count($candidates);
+    foreach ($ballot_rows as $ballot) {
+      // A ballot without votes for any candidate is added to no endorsement.
+      $votes = array_slice($ballot, $offset, $num_candidates);
+      $no_endorsement = true;
+      foreach ($votes as $idx => $v) {
+        if ($v) {
+          $no_endorsement = false;
+          $name = $candidates[$idx];
+          $results['votes'][$name]++;
+        }
+      }
+      if ($no_endorsement) {
+        $results['votes']['no endorsement']++;
+      }
+    }
+    return $results;
   }
 
   public function runoffNeeded() {
@@ -167,24 +180,61 @@ class Manager {
       $this->round2Results = [];
       $eliminated = $this->getEliminatedCandidates();
       $this->round2Results['eliminated'] = $eliminated;
+      // We've already validated that all the files have the same data.
+      /** @var CsvFile $file */
+      $file = reset($this->files);
+      $candidates = array_slice($file->getHeader(), 1, $this->numCandidates);
+      // In any row where an eliminated candidate got a vote we need to transfer
+      // a vote for any other candidate from the second half of the ballot
+      // before counting again.
+      $ballot_rows = [];
+      foreach ($file->getBallotRows() as $row) {
+        $transfer_vote = false;
+        $round1_vote = array_slice($row, 1, $this->numCandidates);
+        $round2_vote = array_slice($row, $this->numCandidates + 2, $this->numCandidates);
+        foreach ($eliminated as $idx) {
+          $transfer_vote = $transfer_vote || $round1_vote[$idx];
+          // Remove votes for eliminated candidates.
+          $round1_vote[$idx] = false;
+          $round2_vote[$idx] = false;
+        }
+        if ($transfer_vote) {
+          foreach ($round2_vote as $idx => $vote) {
+            if ($vote) {
+              $round1_vote[$idx] = true;
+            }
+          }
+        }
+        $ballot_rows[] = $round1_vote;
+      }
+      $this->round2Results += $this->countBallots($candidates, $ballot_rows, 0);
     }
     return $this->round2Results;
   }
 
+  /**
+   * Using first round results, find the eliminated candidates.
+   *
+   * @return array
+   *   Array where keys are candidate names and values are indexes into votes.
+   * @throws \Exception
+   */
   protected function getEliminatedCandidates() {
     $eliminated = [];
     $results = $this->getFirstRoundResults();
     $candidates = $results['votes'];
+    // Positional indexes are useful for processing the eliminations.
+    $candidates_indexes = array_flip(array_keys($candidates));
     unset($candidates['no endorsement']);
     // Eliminate down to the
     while (count($candidates) > ($this->numSeats + 1)) {
       $min = min($candidates);
       foreach ($candidates as $name => $vote_count) {
         if ($vote_count == $min) {
-          $eliminated[$name] = $name;
+          $eliminated[$name] = $candidates_indexes[$name];
         }
       }
-      foreach($eliminated as $name) {
+      foreach($eliminated as $name => $idx) {
         unset($candidates[$name]);
       }
     }

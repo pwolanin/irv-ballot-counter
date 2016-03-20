@@ -17,3 +17,11 @@ $manager = new \IrvBallotCounter\Manager($filenames, $num_candidates, $num_seats
 
 print_r($manager->getFirstRoundResults());
 
+if ($manager->runoffNeeded()) {
+  echo "Runoff is needed. Going to round 2.\n";
+
+  print_r($manager->getSecondRoundResults());
+}
+else {
+  echo "Runoff is not needed\n";
+}
