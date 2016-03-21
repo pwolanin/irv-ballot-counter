@@ -122,8 +122,8 @@ class ManagerTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals('Smoyer', current(array_keys($results['eliminated'])));
     $this->assertEquals(30, $results['ballot_count']);
     $this->assertEquals(16, $results['votes']['Hinds']);
-    $this->assertEquals(12, $results['votes']['Patterson']);
-    $this->assertEquals(16, $results['votes']['Robeson']);
+    $this->assertEquals(13, $results['votes']['Patterson']);
+    $this->assertEquals(17, $results['votes']['Robeson']);
     $this->assertEquals(0, $results['votes']['Smoyer']);
     $this->assertEquals(4, $results['votes']['no endorsement']);
   }
